@@ -266,8 +266,10 @@ To load it, just add these lines after all the ```foreach``` loop:
 $env = new DotEnv(__DIR__ . '/../.env');
 $env->load();
 ```
+
 A ```.env``` file is included by default at the root of the project (not at the web root), this one has testing variables.  
 So, content can be replaced if needed, but ```.env``` must never be on the web root (public directory) of the project.
+
 ---
 ## Contributing
 
