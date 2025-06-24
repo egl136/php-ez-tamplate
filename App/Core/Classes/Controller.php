@@ -3,15 +3,15 @@ namespace App\Core\Classes;
 
 class Controller
 {
-	protected Array $fields;
 	protected Array $values;
 	protected Model $model;
+	
 	public $message;
 	function __construct()
 	{
 		
 	}
-	protected function set_model(Model $model):void
+	protected function setModel(Model $model):void
 	{
 		$this->model = $model;
 	}
@@ -20,65 +20,32 @@ class Controller
 		$this->model->set_fields($this->fields);
 		return $this->model->retrieve_all($where,$order_by,$order_type,$limit);
 	}
-	public function select_row(String $where):Array
+	public function selectRow(array $fields, String $where): array
 	{
-		$this->model->set_fields($this->fields);
-		$this->model->build_model();
-		return $this->model->retrieve_one($where);
+		$row = $this->model->select($fields, $where);
+		$result = count($row) == 0 ? $row[0] : [];
+		return $result;
 	}
-	public function save():bool
+	public function save(array $fields):bool
 	{
-		$saved = false;
-
 		$this->model->set_fields($this->fields);
-		if($this->verify_posts()){
-			
+		if($this->verify_posts()){			
 			$this->model->set_values($this->values);
-			
-		
-			$saved = $this->model->register();
-			
+			return $this->model->register();
 		}
 
-		return $saved;
+		return false;
 	}
 
-	public function set_model_fields(Array $fields):void
+	public function setModelFields(Array $fields):void
 	{
 		$this->fields = $fields;
 	}
 	
-	public function set_model_values(Array $values):void
+	public function setModelValues(Array $values):void
 	{
 		$this->values = $values;
 	}
-	
-	protected function is_post():bool
-	{
-		return $_SERVER['REQUEST_METHOD'] == 'POST';
-	}
-	
-	private function verify_posts():bool
-	{
-		$posts_exist = false;
-		if($this->is_post()){
-			$n = 0;
-			foreach ($this->model->get_fields() as $field) {
-				if(empty($_POST[$field]) && !isset($_POST[$field])){
-					return false;
-				}
-				$this->values[$n] = "'{$_POST[$field]}'";
-				$n++;
-			}
-			$posts_exist = true;
-		}
-		
-		return $posts_exist;
-	}
-	
-	protected function get_exists($variable):bool
-	{
-		return !empty($_GET[$variable]) && isset($_GET[$variable]);
-	}
+
 }
 ?>

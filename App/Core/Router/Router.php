@@ -14,6 +14,7 @@ class Router {
 
     public function delete(string $route, string $action) {
         $this->addRoute('DELETE', $route, $action);
+        
     }
 
     public function patch(string $route, string $action) {
@@ -49,6 +50,7 @@ class Router {
         }
 
         foreach ($this->routes[$method] as $route) {
+           
             if (preg_match($route['pattern'], $uri, $matches)) {
                 array_shift($matches); // Remove the full match
                 $params = array_combine($route['params'], $matches);

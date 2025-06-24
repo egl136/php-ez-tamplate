@@ -28,6 +28,7 @@ Structure template with Laravel like Router and some stuff. Meant for personal u
   - [The sample model](#the-sample-model)
   - [The sample controller](#the-sample-controller)
   - [Adding routes](#adding-routes)
+  - [.env](#env-file)
 - [Contributing](#contributing)
 - [License](#license)
 - [Contact](#contact)
@@ -153,18 +154,15 @@ Check ```http://yourdomain.sub/sample```. This should print a json string on scr
 │   ├── App/
 │   │   ├── Core/
 │   │   │   ├── Classes/
-│   │   │   │   ├── Controller.php
-│   │   │   │   ├── Model.php
-│   │   │   │   └── View.php
 │   │   │   ├── Controllers/
+│   │   │   ├── Helpers/
 │   │   │   ├── Models/
 │   │   │   └── Router/
 │   │   │       ├── api.php
-│   │   │       ├── Router.php
 │   │   │       └── web.php
 │   ├── Config/
 │   │   └── Services
-│   │       └── Database
+│   │   
 │   ├── public/
 │   │   ├── index.php
 │   │   └── .htaccess
@@ -188,10 +186,14 @@ require_once __DIR__ . '/../Classes/Model.php';
 
 class SampleModel extends Model
 {
-	function __construct(protected String $model_name = "sample")
-	{
+  function __construct(protected String $model_name = "sample", bool $generateId = false, int $idLen = 5, string $idType = "alphanumerical")
+  {
+    $this->idColumn = "id";
+    $this->model_name = $model_name;
+    //To call the parent Model constructors
+    parent::__construct($model_name);
+  }
 
-	}
 }
 ```
 
@@ -209,29 +211,32 @@ require_once __DIR__ . '/../Models/SampleModel.php';
 
 class SampleController extends Controller
 {
-	function __construct(protected String $model_name = "sample")
-	{
-		$sampleModel = new SampleModel();
-		$this->set_model($sampleModel);
-	}
-	public function getAll()
-	{
-		$data = [
-			"Sample1"=>"sup",
-			"Sample2"=>"samples",
-			"Sample3"=>"are",
-			"Sample4"=>"working"
-		];
-		echo json_encode($data);
-		return json_encode($data);
-	}
+  function __construct()
+  {
+    $sampleModel = new SampleModel();
+    $this->setModel($sampleModel);
+  }
+  public function getAll() : string
+  {
+    $data = $this->model->select(["*"]);
+    $response = json_encode($data);
+    echo $response;
+    return $response;
+  }
 
-	public function findId($id)
-	{
-		echo json_encode([$id]);
-		return json_encode([$id]);
-	}
+  public function findId(string $id) : string
+  {
+    $data = $this->model->findId(["*"],$id);
+    $response = json_encode($data);
+    echo $response;
+    return $response;
+  }
+  public function delete(string $id)
+  {
+    return $this->model->deleteId($id);
+  }
 }
+
 ```
 ### Adding routes
 To add a new route, just add it to the ```App/Core/Router/api.php``` or ```App/Core/Router/web.php```.  
@@ -245,13 +250,24 @@ use App\Core\Router\Router;
 $router = new Router();
 $router->get('/sample', 'SampleController@getAll');
 $router->get('/sample/{id}', 'SampleController@findId');
+$router->delete('/sample/delete/{id}', 'SampleController@delete');
 
-$router->dispatch($_SERVER['REQUEST_URI']);
+$router->dispatch($_SERVER['REQUEST_URI'],$_SERVER['REQUEST_METHOD']);
+
 ```
-the expected routes are ```your-domain.com/sample```, wich calls to the ```getAll()``` from the ```SampleController```; and  
-```your-domain.com/sample/{id}```, wich calls to the ```findId()``` from the ```SampleController```. This last one is a  
-dynamic route.
+the expected routes are ```your-domain.com/sample```, wich calls to the ```getAll()``` from the ```SampleController```;  
+```your-domain.com/sample/{id}```, wich calls to the ```findId()``` from the ```SampleController```;  
+```DELETE http://your-domain.com/sample/delete/{id}```, wich calls to the ```deleteId()``` from the ```SampleController```. These last two are dynamic routes.
 
+### ```.env``` File
+Load your ```.env``` file on the ```App/bootstrap.php```, so it will be loaded from startup.  
+To load it, just add these lines after all the ```foreach``` loop:
+```php
+$env = new DotEnv(__DIR__ . '/../.env');
+$env->load();
+```
+A ```.env``` file is included by default at the root of the project (not at the web root), this one has testing variables.  
+So, content can be replaced if needed, but ```.env``` must never be on the web root (public directory) of the project.
 ---
 ## Contributing
 

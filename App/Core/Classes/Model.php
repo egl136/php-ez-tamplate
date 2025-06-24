@@ -1,85 +1,91 @@
 <?php
 namespace App\Core\Classes;
+use App\Core\Classes\Database;
+require_once 'Database.php';
 
-class Model
+abstract class Model
 {
-	protected ?Array $fields;
-	public ?Array $values;
-	public String $msg;
-	function __construct(protected String $model_name)
-	{
-		
-	}
-	public function get_fields():Array
-	{
-		return $this->fields;
-	}
-	public function set_fields(Array $fields):void
-	{
-		$this->fields = $fields;
-	}
-	public function set_values(Array $values):void
-	{
-		$this->values = $values;
-	}
+  protected ?string $id;
+  protected ?string $idColumn;
+  protected ?Database $db;
+  function __construct(protected string $modelName, bool $generateId = false, int $idLen = 5, string $idType = "alphanumerical")
+  {
+    $this->id = $generateId ? $this->generateId($idLen, $idType) : null;
+    $this->db = Database::getInstance();
+    $this->db->setTable($this->modelName);
+  }
+  public function getModelName():string
+  {
+    return $this->modelName;
+  }
+  public function register(array $data):bool
+  {
+    return $this->db->create($data);
+  }
+  public function findId(array $fields, string $id):array
+  {
+    return $this->select($fields, "$this->idColumn = '$id'")[0];
+  }
+  public function select(array $fields, string $where = '1=1', string $orderBy = '',
+                        string $orderType = 'ASC', int $limit = 100):array
+  {
+    return $this->db->read($fields, $where, $orderBy, $orderType, $limit);
+  }
 
+  public function update(array $data, string $where):bool
+  {
+    return $this->db->update($data, $where);
+  }
 
-	public function build_model():void
-	{
-		DATABASE->select_table($this->model_name);
-		DATABASE->set_fields($this->fields);
-	}
-	private function destroy_model():void
-	{
-		DATABASE->select_table("");
-		DATABASE->set_fields([]);
-	}
-
-
-	public function register():bool
-	{
-		$this->build_model();
-		$registered = $this->save_on_database();
-		$this->msg = "ola";
-		$this->destroy_model();
-		return $registered;
-	}
-	public function retrieve_all(String $where = "1=1", String $order_by = "", String $order_type = "ASC",  String $limit = "100"):Array
-	{
-		$this->build_model();
-		$data = $this->get_from_table($where,$order_by,$order_type,$limit);
-		$this->destroy_model();
-		return $data;
-	}
-	public function retrieve_one($where):Array
-	{
-		$this->build_model();
-		$data = $this->get_one_from_table($where);
-		$this->destroy_model();
-		return $data;
-	}
-	private function save_on_database():bool
-	{
-		
-		$saved = DATABASE->create($this->values);
-		
-		return $saved;
-	}
-	private function get_from_table(String $where = "1=1", String $order_by = "", String $order_type = "ASC",  String $limit = "100"):Array
-	{
-		
-		DATABASE->select_from($where,$order_by,$order_type,$limit);
-		return DATABASE->results;
-	}
-	private function get_one_from_table(String $where):Array
-	{
-		return DATABASE->select_one($where);
-	}
-	public function update(String $where, String $value):bool
-	{
-		$this->build_model();
-		return DATABASE->update($where,$value);
-	}
-	
+  public function delete(array $on)
+  {
+    return $this->db->delete($on);
+  }
+  public function deleteId(string $id)
+  {
+    return $this->db->delete([$this->idColumn=>$id]);
+  }
+  protected function generateId(int $len, string $type = 'alphanumeric'):string
+  {
+    $generated = "";
+    $charSets = [
+      'letters' => 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
+      'numbers' => '0123456789',
+      'alphanumeric' => 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+      'alphanumericspecial' => 'abcdefghijklmnñopqrstuvwxyzABCDEFGHIJKLMNÑOPQRSTUVWXYZ0123456789!@#$%^&*()_?',
+      'ilegal' => '+-=[]{}|;:",.<>/~`'
+    ];
+    $activeCharSet = $charSets[$type] ?? $charSets['alphanumeric'];
+    $charSetLength = strlen($activeCharSet);
+    for ($i=0; $i < $len; $i++) {
+      $generated .= $activeCharSet[random_int(0, $charSetLength - 1)];
+    }
+    return $generated;
+  }
+  protected function validChars(string $text, bool $validateLen = false, int $maxLen = 10, int $minLen = 1)
+  {
+    $ilegalChars = '+-=[]{}|;:",.<>/~`';
+    $textLen = strlen($text);
+    if($validateLen){
+      if($textLen < $minLen || $textLen > $maxLen){
+        return false;
+      }
+    }
+    if(strpbrk($text,$ilegalChars) !== false){
+      return false;
+    }
+    return true;
+  }
+  public function hashingWord(string $word):array
+  {
+    $validWord = $this->validChars($word, true, 55, 8);
+    $hashed = $validWord ? password_hash($word, PASSWORD_DEFAULT) : "invalid";
+    $status = $validWord ? "Hashed" : "Invalid";
+    return [
+      "Status"=>$status,
+      "Hash"=>$hashed
+    ];
+  }
 }
+
 ?>
