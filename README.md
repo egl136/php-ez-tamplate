@@ -257,7 +257,7 @@ $router->dispatch($_SERVER['REQUEST_URI'],$_SERVER['REQUEST_METHOD']);
 ```
 the expected routes are ```your-domain.com/sample```, wich calls to the ```getAll()``` from the ```SampleController```;  
 ```your-domain.com/sample/{id}```, wich calls to the ```findId()``` from the ```SampleController```;  
-```DELETE http://your-domain.com/sample/delete/{id}```, wich calls to the ```deleteId()``` from the ```SampleController```. These last two are dynamic routes.
+```DELETE http://your-domain.com/sample/delete/{id}```, wich calls to the ```delete()``` from the ```SampleController```. These last two are dynamic routes.
 
 ### ```.env``` File
 Load your ```.env``` file on the ```App/bootstrap.php```, so it will be loaded from startup.  
