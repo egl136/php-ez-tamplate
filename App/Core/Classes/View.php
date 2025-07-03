@@ -1,12 +1,15 @@
 <?php
-namespace App\Core;
+namespace App\Core\Classes;
 
 class View {
+    
     public static function render($view, $data = []) {
         extract($data);
         ob_start();
-        include "../app/Views/$view.php";
+        include __DIR__."/../../Views/$view";
         $content = ob_get_clean();
-        include "../app/Views/layout.php";  // master template
+        include "../App/Views/layout.php";  
     }
 }
+
+?>

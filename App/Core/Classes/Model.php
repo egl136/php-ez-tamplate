@@ -2,8 +2,7 @@
 namespace App\Core\Classes;
 use App\Core\Classes\Database;
 require_once 'Database.php';
-
-abstract class Model
+class Model
 {
   protected ?string $id;
   protected ?string $idColumn;
